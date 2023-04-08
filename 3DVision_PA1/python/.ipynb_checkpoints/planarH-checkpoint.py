@@ -50,6 +50,7 @@ def computeH_ransac(locs1, locs2):
 
 
 def compositeH(H2to1, template, img):
+	
 	#Create a composite image after warping the template image on top
 	#of the image using the homography
 
