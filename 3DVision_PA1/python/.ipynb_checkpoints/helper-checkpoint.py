@@ -6,10 +6,10 @@ import skimage.feature
 
 PATCHWIDTH = 9
 
-def briefMatch(desc1,desc2,ratio=0.8):
+def briefMatch(desc1,desc2,ratio=0.65):
+
 	matches = skimage.feature.match_descriptors(desc1,desc2,'hamming',cross_check=True,max_ratio=ratio)
 	return matches
-	
 	
 
 def plotMatches(im1,im2,matches,locs1,locs2):
@@ -22,7 +22,6 @@ def plotMatches(im1,im2,matches,locs1,locs2):
 	return
 
 
-
 def makeTestPattern(patchWidth, nbits):
 	np.random.seed(0)
 	compareX = patchWidth*patchWidth * np.random.random((nbits,1))
@@ -32,8 +31,6 @@ def makeTestPattern(patchWidth, nbits):
 	compareY = np.floor(compareY).astype(int)
 
 	return (compareX, compareY)
-
-
 
 
 def computePixel(img, idx1, idx2, width, center):
@@ -65,3 +62,4 @@ def corner_detection(im, sigma=1.5):
 	result_img = skimage.feature.corner_fast(im, PATCHWIDTH)
 	locs = skimage.feature.corner_peaks(result_img, min_distance=1)
 	return locs
+
