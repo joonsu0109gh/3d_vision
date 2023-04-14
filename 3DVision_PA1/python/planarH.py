@@ -141,12 +141,16 @@ def computeH_ransac_adaptive(locs1, locs2, num_iter, inlier_tol=4):
             # Update the number of iterations based on the current inlier ratio
             inlier_ratio = float(max_inliers) / n
 
-            if 1 - (inlier_ratio + eps)**4 == 0:
+            if inlier_ratio == 1:
+                # If inlier_ratio is exactly 1, set it to a slightly smaller value
+                inlier_ratio -= eps
+
+            if 1 - (inlier_ratio + eps)**4 <= 0:
+                # If the value inside the logarithm is negative or zero, set num_iter to a very large value
                 num_iter = np.inf
             else:
                 num_iter = int(np.log(1 - p) / np.log(1 - (inlier_ratio + eps)**4))
-                print(num_iter)
-    print(num_iter)
+
     return bestH2to1, inliers
 
 
@@ -177,13 +181,8 @@ def compositeH(H2to1, template, img):
     return composite_img
 
 def warped(H2to1, template, img):
-    # Create a composite image after warping the template image on top
-    # of the image using the homography
-
-    # Note that the homography we compute is from the image to the template;
-    # x_template = H2to1*x_photo
-    # For warping the template to the image, we need to invert it.
-
+    # template = cover
+    # img = desk
     # Create mask of same size as template
     mask = np.ones_like(template)
 
@@ -196,5 +195,5 @@ def warped(H2to1, template, img):
     # Use mask to combine the warped template and the image
     composite_img = img.copy()
     composite_img[warped_mask == 1] = warped_template[warped_mask == 1]
-    
+
     return composite_img
