@@ -65,43 +65,7 @@ def computeH_norm(x1, x2):
 
 
 
-def computeH_ransac(locs1, locs2, num_iter=1500, inlier_tol=4):
-    # Q2.2.3
-    # Compute the best fitting homography given a list of matching points
-    n = locs1.shape[0]
-    max_inliers = -1
-    bestH2to1 = None
-    inliers = None
-    
-    for i in range(num_iter):
-        # Randomly sample 4 points
-        indices = np.random.choice(n, 4, replace=False)
-        x1_sample = locs1[indices, :]
-        x2_sample = locs2[indices, :]
-
-        # Compute the homography using the sample points
-        H_sample = computeH_norm(x1_sample, x2_sample)
-
-        # Compute the projection error for all points
-        homogeneous_locs2 = np.concatenate((locs2, np.ones((n, 1))), axis=1)
-        locs2_hom = H_sample @ homogeneous_locs2.T  # convert to homography coordinates
-        locs2_hom = locs2_hom[:2, :] / (locs2_hom[2, :] + np.finfo(float).eps)  # add eps to avoid division by zero
-        errors = np.linalg.norm(locs1 - locs2_hom.T, axis=1)
-
-        # Count inliers
-        num_inliers = np.sum(errors < inlier_tol)
-
-        # Update best homography if current sample produces more inliers
-        if num_inliers > max_inliers:
-            max_inliers = num_inliers
-            #x1_sample = locs1[inliers, :]
-            #x2_sample = locs2[inliers, :]
-            bestH2to1 = H_sample
-            inliers = errors < inlier_tol
-
-    return bestH2to1, inliers
-
-def computeH_ransac_adaptive(locs1, locs2, num_iter, inlier_tol=4):
+def computeH_ransac(locs1, locs2, num_iter=1500, inlier_tol=4, adaptive = False):
     # Q2.2.3
     # Compute the best fitting homography given a list of matching points
     n = locs1.shape[0]
@@ -110,7 +74,8 @@ def computeH_ransac_adaptive(locs1, locs2, num_iter, inlier_tol=4):
     inliers = None
     
     p = 0.99  # Desired probability of finding at least one good sample
-    eps = 1e-5  # A small value to avoid division by zero
+    eps = 1e-5
+
     for i in range(num_iter):
         # Randomly sample 4 points
         indices = np.random.choice(n, 4, replace=False)
@@ -136,25 +101,24 @@ def computeH_ransac_adaptive(locs1, locs2, num_iter, inlier_tol=4):
             #x2_sample = locs2[inliers, :]
             bestH2to1 = H_sample
             inliers = errors < inlier_tol
-            
-            
-            # Update the number of iterations based on the current inlier ratio
-            inlier_ratio = float(max_inliers) / n
 
-            if inlier_ratio == 1:
-                # If inlier_ratio is exactly 1, set it to a slightly smaller value
-                inlier_ratio -= eps
+            if adaptive == True:
+                # Update the number of iterations based on the current inlier ratio
+                inlier_ratio = float(max_inliers) / n
 
-            if 1 - (inlier_ratio + eps)**4 <= 0:
-                # If the value inside the logarithm is negative or zero, set num_iter to a very large value
-                num_iter = np.inf
-            else:
-                num_iter = int(np.log(1 - p) / np.log(1 - (inlier_ratio + eps)**4))
+                if inlier_ratio == 1:
+                    # If inlier_ratio is exactly 1, set it to a slightly smaller value
+                    inlier_ratio -= eps
+
+                if 1 - (inlier_ratio + eps)**4 <= 0 or inlier_ratio + eps == 1:
+                    # If the value inside the logarithm is negative or zero, set num_iter to a very large value
+                    num_iter = np.inf
+                else:
+                    num_iter = int(np.log(1 - p) / np.log(1 - (inlier_ratio + eps)**4))
 
     return bestH2to1, inliers
-'''
 
-def compositeH(H2to1, template, img):
+def compositeH(H2to1, template, img, direct = True):
     # Create a composite image after warping the template image on top
     # of the image using the homography
 
@@ -162,42 +126,48 @@ def compositeH(H2to1, template, img):
     # x_template = H2to1*x_photo
     # For warping the template to the image, we need to invert it.
 
-    # Compute inverse homography
-    H1to2 = np.linalg.inv(H2to1)
-    
-    # Create mask of same size as template
-    mask = np.ones_like(img)
+    #template = cover
+    #img = desk
 
-    # Warp mask by appropriate homography
-    warped_mask = cv2.warpPerspective(mask, H1to2, (template.shape[1], template.shape[0]))
+    if direct == True:
+        mask = np.full_like(template, 1)
 
-    # Warp template by appropriate homography
-    warped_template = cv2.warpPerspective(img, H1to2, (template.shape[1], template.shape[0]))
+        # Warp mask by appropriate homography
+        warped_mask = cv2.warpPerspective(mask, H2to1, (img.shape[1], img.shape[0]))
+        
+        # Warp template by appropriate homography
+        warped_template = cv2.warpPerspective(template, H2to1, (img.shape[1], img.shape[0]))
 
-    # Use mask to combine the warped template and the image
-    composite_img = template.copy()
-    composite_img[warped_mask == 1] = warped_template[warped_mask == 1]
+        # Use mask to combine the warped template and the image
+        composite_img = img.copy()
+        composite_img[warped_mask == 1] = warped_template[warped_mask == 1]
 
-    return composite_img
-'''
-def compositeH(H2to1, template, img):
-    # template = harry
-    # img = desk
-    # Create mask of same size as template
+        return composite_img
 
-    mask = np.full_like(template, 1)
+    elif direct == False:
+        
+        # Compute inverse homography
+        H1to2 = np.linalg.inv(H2to1)
+        
+        # Create mask of same size as template
+        mask = np.ones_like(template)
 
-    # Warp mask by appropriate homography
-    warped_mask = cv2.warpPerspective(mask, H2to1, (img.shape[1], img.shape[0]))
-    
-    # Warp template by appropriate homography
-    warped_template = cv2.warpPerspective(template, H2to1, (img.shape[1], img.shape[0]))
+        # Warp mask by appropriate homography
+        warped_mask = cv2.warpPerspective(mask, H1to2, (img.shape[1], img.shape[0]))
 
-    # Use mask to combine the warped template and the image
-    composite_img = img.copy()
-    composite_img[warped_mask == 1] = warped_template[warped_mask == 1]
+        # Warp template by appropriate homography
+        warped_template = cv2.warpPerspective(template, H1to2, (img.shape[1], img.shape[0]))
 
-    return composite_img
+        # Use mask to combine the warped template and the image
+        composite_img = img.copy()
+        composite_img[warped_mask == 1] = warped_template[warped_mask == 1]
+
+        return composite_img
+
+
+
+
+
 
 def compositeH_panorama_blend(H2to1, dst, src):
     # src = cover
@@ -272,19 +242,10 @@ def compositeH_panorama(H2to1, dst, src):
 
     return trimmed_panorama
 
-
 def draw_matchings(img_src, img_dst):
     # Load images
     # Detect keypoints and extract descriptors
-    orb = cv2.ORB_create(nfeatures=500,
-                        scaleFactor=1.2,
-                        nlevels=8,
-                        edgeThreshold=31,
-                        firstLevel=0,
-                        WTA_K=2,
-                        scoreType=cv2.ORB_HARRIS_SCORE,
-                        patchSize=31,
-                        fastThreshold=20)
+    orb = cv2.ORB_create(nfeatures=3000)
 
     kp1, des1 = orb.detectAndCompute(img_src, None)
     kp2, des2 = orb.detectAndCompute(img_dst, None)
@@ -308,7 +269,7 @@ def draw_matchings(img_src, img_dst):
     plt.show()
 
 def get_H(img_src, img_dst):
-    orb = cv2.ORB_create(nfeatures=1000,
+    orb = cv2.ORB_create(nfeatures=10000,
                         scaleFactor=1.2,
                         nlevels=8,
                         edgeThreshold=31,
