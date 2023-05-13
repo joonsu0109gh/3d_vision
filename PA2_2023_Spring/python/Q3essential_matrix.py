@@ -24,9 +24,9 @@ class Q3(Q2):
         """
 
         # DO NOT CHANGE HERE!
-        self.K1 = K1
-        self.K2 = K2
-        self.E = E
+        self.K1 = data = np.load('../data/intrinsics.npz')['K1']
+        self.K2 = data = np.load('../data/intrinsics.npz')['K2']
+        self.E = self.essential_matrix(self.F, self.K1, self.K2)
 
 
     """
@@ -37,15 +37,8 @@ class Q3(Q2):
         [O] E, the essential matrix (3x3 matrix)
     """
     def essential_matrix(self, F, K1, K2):
-        """
-        Write your own code here 
-
-
-        
-
-        replace pass by your implementation
-        """
-        pass
+        E = np.matmul(K2.T, np.matmul(F, K1))
+        return E
 
 
 

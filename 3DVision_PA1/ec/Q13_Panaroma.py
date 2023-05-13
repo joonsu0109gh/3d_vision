@@ -8,7 +8,7 @@ import skimage.color
 #Import necessary functions
 sys.path.append('../python')
 import planarH
-from planarH import computeH_ransac, compositeH, computeH_norm, compositeH_panorama, compositeH_panorama_blend
+from planarH import computeH_ransac, compositeH, computeH_norm, compositeH_panorama
 
 
 #Write script for Q13
@@ -64,3 +64,21 @@ plt.title('Stitched image')
 plt.axis('off')
 
 plt.show()
+
+
+'''
+plt.imshow(cv2.cvtColor(img_dst, cv2.COLOR_BGR2RGB))
+plt.title('Left image')
+plt.axis('off')
+plt.show()
+
+plt.imshow(cv2.cvtColor(img_src, cv2.COLOR_BGR2RGB))
+plt.title('Right image')
+plt.axis('off')
+plt.show()
+
+plt.imshow(result)
+plt.title('Stitched image')
+plt.axis('off')
+plt.show()
+'''

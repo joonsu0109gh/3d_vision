@@ -22,9 +22,10 @@ class Q2(Q1):
         pts2 = self.epipolar_correspondences(self.im1, self.im2, self.F, pts1)
 
         """
+
         # DO NOT CHANGE HERE!
-        self.pts1 = pts1
-        self.pts2 = pts2
+        self.pts1 = np.load('../data/temple_coords.npz')['pts1']
+        self.pts2 = self.epipolar_correspondences(self.im1, self.im2, self.F, self.pts1)
 
 
     """
@@ -36,15 +37,36 @@ class Q2(Q1):
         [O] pts2, points in image 2 (Nx2 matrix)
     """
     def epipolar_correspondences(self, im1, im2, F, pts1):
-        """
-        Write your own code here 
+        window_size = 5
+        num_points = pts1.shape[0]
+        pts2 = np.zeros_like(pts1)
 
+        for i in range(num_points):
+            x, y = pts1[i]
+            v = np.array([[x], [y], [1]])
+            l = F @ v
+            a, b, c = l[0], l[1], l[2]
 
-        
+            # Generate candidate points along the epipolar line
+            min_idx = max(0, int(x) - window_size)
+            max_idx = min(im2.shape[1] - 1, int(x) + window_size)
+            candidate_points = np.arange(min_idx, max_idx + 1)
 
-        replace pass by your implementation
-        """
-        pass
+            # Compute similarity scores between target window and candidate windows
+            scores = []
+            for candidate_x in candidate_points:
+                window1 = im1[y - window_size: y + window_size + 1, x - window_size: x + window_size + 1]
+                window2 = im2[y - window_size: y + window_size + 1, candidate_x - window_size: candidate_x + window_size + 1]
+                score = np.sum(np.abs(window1 - window2))
+                scores.append(score)
+
+            # Find the candidate point with the highest score
+            best_candidate_idx = np.argmin(scores)
+            x_candidate = candidate_points[best_candidate_idx]
+            pts2[i] = [x_candidate, y]
+
+        return pts2
+
 
     def epipolarMatchGUI(self, I1, I2, F):
         sy, sx, sd = I2.shape

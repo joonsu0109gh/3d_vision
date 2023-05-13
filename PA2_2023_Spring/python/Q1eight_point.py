@@ -65,16 +65,14 @@ class Q1:
         F = V[-1].reshape((3, 3))
 
         # Enforce rank-2 constraint on F
-        U, S, V = la.svd(F)
-        S[-1] = 0
-        F = U @ np.diag(S) @ V
+        F = hlp._singularize(F)
 
         # Unnormalize F
         T = np.diag([1/M, 1/M, 1])
         F = T.T.dot(F).dot(T)
 
         F = hlp.refineF(F, locs1, locs2)
-
+        print(F)
         return F
 
 

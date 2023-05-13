@@ -44,9 +44,10 @@ for iter in range(2, 240, 30):
     inlier_avg = np.mean(inlier_sample)
     ransac.append(inlier_avg)
 
+
 # visualize the number of inliers for it
-plt.plot(iter_arr, ransac)
+plt.plot(iter_arr, ransac, marker='s', color = '#147062',linewidth = 3)
+plt.title('The number of inliers per RANSAC iteration', pad=15)
 plt.xlabel('Iteration number', labelpad=10)
 plt.ylabel('Inlier number', labelpad=10)
-plt.show()
 plt.show()

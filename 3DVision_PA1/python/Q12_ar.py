@@ -15,8 +15,7 @@ import imageio
 #Write script for Q12
 def loadVid(filename):
     cap = cv2.VideoCapture(filename)
-    fps = cap.get(cv2.CAP_PROP_FPS)
-    print(fps)
+    #fps = cap.get(cv2.CAP_PROP_FPS)
     frames = [] 
     while True:
         ret, frame = cap.read()
@@ -33,6 +32,8 @@ ar_frames = loadVid("../data/ar_source.mov") # (360, 640) 511 frame FPS 25
 
 vid_frames = []
 
+print("Generating video frames")
+
 for book_frame, ar_frame in zip(book_frames, tqdm(ar_frames)):
 
     cropped_ar = ar_frame[44:316, 320-108 : 320+108]
@@ -46,10 +47,9 @@ for book_frame, ar_frame in zip(book_frames, tqdm(ar_frames)):
 
     matches_cv = bf.match(des1, des2)
 
-    # Sort matches by distance
     matches_cv = sorted(matches_cv, key=lambda x: x.distance)
 
-    num_matches = int(len(matches_cv) * 0.5)  # choose 10% of total matches
+    num_matches = int(len(matches_cv) * 0.5)
     best_matches = matches_cv[:num_matches]
 
     pts1_best = np.float32([kp1[m.queryIdx].pt for m in best_matches]).reshape(-1, 2)
@@ -67,9 +67,11 @@ for book_frame, ar_frame in zip(book_frames, tqdm(ar_frames)):
 
     result = compositeH(H2to1, cropped_ar, book_frame)
 
+    result = cv2.cvtColor(result, cv2.COLOR_BGR2RGB)
+
     vid_frames.append(result)
 
-writer = imageio.get_writer('../result/ar_adaptive_O_0.5.avi', fps=25)
+writer = imageio.get_writer('../result/ar.avi', fps=25)
 
 for i in range(len(vid_frames)):
     img = vid_frames[i]

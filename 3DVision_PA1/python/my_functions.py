@@ -29,7 +29,7 @@ def compositeH_panorama_blend(H2to1, dst, src):
     panorama = panorama * 2
 
     # trim the empty space of an image
-    panorama = remove_padding(panorama)
+    trimmed_panorama = remove_padding(panorama)
 
     # Extract the trimmed region from the original image
     #trimmed_panorama = panorama[y:y+h, x:x+w]
@@ -58,19 +58,7 @@ def compositeH_panorama(H2to1, dst, src):
     #warped_src[dst_mask_padded == 1] = dst_padded[dst_mask_padded == 1]
 
     panorama = dst_padded
-    '''
-    # trim the empty space of an image
-    gray = cv2.cvtColor(panorama, cv2.COLOR_BGR2GRAY)
-
-    # Find the non-zero (foreground) region of the image
-    _, thresh = cv2.threshold(gray, 1, 255, cv2.THRESH_BINARY)
-    contours, _ = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-    contour = contours[0]
-    x, y, w, h = cv2.boundingRect(contour)
-
-    # Extract the trimmed region from the original image
-    trimmed_panorama = panorama[y:y+h, x:x+w]
-    '''
+    #panorama = warped_src
 
     trimmed_panorama = remove_padding(panorama)
     return trimmed_panorama
@@ -92,14 +80,11 @@ def draw_matchings(img_src, img_dst):
 
     # Select the top 10% accurate matches
 
-    num_matches = int(len(matches_cv) * 0.01)  # choose 10% of total matches
+    num_matches = int(len(matches_cv) * 0.1)  # choose 10% of total matches
     best_matches = matches_cv[:num_matches]
     img_matches = cv2.drawMatches(img_src, kp1,img_dst,  kp2, best_matches, None, flags=cv2.DrawMatchesFlags_NOT_DRAW_SINGLE_POINTS)
 
-    # Display the image with matches
-    plt.imshow(img_matches)
-    plt.axis('off')
-    plt.show()
+    return img_matches
 
 def get_H(img_src, img_dst):
 
