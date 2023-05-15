@@ -71,6 +71,9 @@ class Q1:
         T = np.diag([1/M, 1/M, 1])
         F = T.T.dot(F).dot(T)
 
+        # Scale the fundamental matrix
+        F = F / np.sqrt(2)
+
         F = hlp.refineF(F, locs1, locs2)
         print(F)
         return F

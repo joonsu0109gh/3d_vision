@@ -24,7 +24,9 @@ class Q4(Q3):
 
         for i in range(4):
             # Step 3. Run triangulate using the projection matrices
-            P2 = np.vstack((P2s[i, :, :]))
+            P2 = P2s[:, :, i]
+            # P2 = P2s[i, :, :]
+
             pts3d = self.triangulate(P1, self.pts1, P2, self.pts2)
 
             # Step 4. Figure out the correct P2
@@ -59,14 +61,23 @@ class Q4(Q3):
         pts1_homog = pts1_homog.T
         pts2_homog = pts2_homog.T
 
+        # Adjust the dimensions of P1 and P2
+        # P1 = np.vstack((P1, np.zeros((1, 4))))
+        # P2 = np.vstack((P2, np.zeros((1, 4))))
+
+        # P1z = P1[:3]
+        # P2z = P2[:3]
+
         # Triangulate the points
-        pts4d_homog = cv.triangulatePoints(P1, P2, pts1_homog[:2, :], pts2_homog[:2, :])
+        pts4d_homog = cv.triangulatePoints(P1, P2.T, pts1_homog[:2, :], pts2_homog[:2, :])
 
         # Convert points to non-homogeneous coordinates
         pts3d = (pts4d_homog[:3, :] / pts4d_homog[3, :]).T
 
         # Return the 3D points
         return pts3d
+
+
 
 if __name__ == "__main__":
 
